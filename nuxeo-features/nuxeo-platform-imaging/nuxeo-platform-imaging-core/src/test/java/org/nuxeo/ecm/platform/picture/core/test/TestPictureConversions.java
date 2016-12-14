@@ -18,7 +18,7 @@
  */
 package org.nuxeo.ecm.platform.picture.core.test;
 
-import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -89,7 +89,7 @@ public class TestPictureConversions {
 
     protected void checkDefaultPictureConversionsPresence() {
         List<String> pictureConversionIds = getPictureConversionIds();
-        org.junit.Assert.assertTrue(pictureConversionIds.containsAll(DEFAULT_PICTURE_CONVERSIONS));
+        assertTrue(pictureConversionIds.toString(), pictureConversionIds.containsAll(DEFAULT_PICTURE_CONVERSIONS));
     }
 
     protected List<String> getPictureConversionIds() {
@@ -135,6 +135,11 @@ public class TestPictureConversions {
 
         for (PictureConversion pictureConversion : imagingService.getPictureConversions()) {
             switch (pictureConversion.getId()) {
+            case "Original":
+            case "OriginalJpeg":
+                // still enabled after merge because it's still marked as default
+                assertTrue(pictureConversion.getId(), pictureConversion.isEnabled());
+                break;
             case "Small":
                 assertEquals(50, (int) pictureConversion.getMaxSize());
                 assertTrue(pictureConversion.getDescription().contains("override"));

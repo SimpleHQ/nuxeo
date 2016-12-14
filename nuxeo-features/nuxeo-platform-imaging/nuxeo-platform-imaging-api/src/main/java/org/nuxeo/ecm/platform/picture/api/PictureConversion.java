@@ -22,6 +22,7 @@ package org.nuxeo.ecm.platform.picture.api;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.nuxeo.common.xmap.annotation.XNode;
@@ -36,6 +37,16 @@ import org.nuxeo.common.xmap.annotation.XObject;
  */
 @XObject("pictureConversion")
 public class PictureConversion implements Comparable<PictureConversion> {
+
+    private static final int DEFAULT_ORDER = 0;
+
+    private static final boolean DEFAULT_ENABLED = true;
+
+    private static final boolean DEFAULT_ISDEFAULT = false;
+
+    private static final boolean DEFAULT_RENDITION_VISIBLE = true;
+
+    private static final boolean DEFAULT_ISRENDITION = true;
 
     @XNode("@id")
     protected String id;
@@ -91,8 +102,8 @@ public class PictureConversion implements Comparable<PictureConversion> {
         return id;
     }
 
-    public Integer getOrder() {
-        return order == null ? 0 : order;
+    public int getOrder() {
+        return order == null ? DEFAULT_ORDER : order.intValue();
     }
 
     public String getDescription() {
@@ -104,19 +115,13 @@ public class PictureConversion implements Comparable<PictureConversion> {
     }
 
     public boolean isEnabled() {
-        return enabled == null || enabled;
-    }
-
-    public boolean isEnabledSet() {
-        return enabled != null;
+        boolean isEnabled = enabled == null ? DEFAULT_ENABLED : enabled.booleanValue();
+        // cannot disable default picture conversion
+        return isEnabled || isDefault();
     }
 
     public boolean isDefault() {
-        return isDefault == null ? false : isDefault;
-    }
-
-    public boolean isDefaultSet() {
-        return isDefault != null;
+        return isDefault == null ? DEFAULT_ISDEFAULT : isDefault.booleanValue();
     }
 
     public String getChainId() {
@@ -149,11 +154,11 @@ public class PictureConversion implements Comparable<PictureConversion> {
         this.description = description;
     }
 
-    public void setEnabled(boolean enabled) {
+    public void setEnabled(Boolean enabled) {
         this.enabled = enabled;
     }
 
-    public void setDefault(boolean isDefault) {
+    public void setDefault(Boolean isDefault) {
         this.isDefault = isDefault;
     }
 
@@ -174,19 +179,11 @@ public class PictureConversion implements Comparable<PictureConversion> {
     }
 
     public boolean isRenditionVisible() {
-        return renditionVisible == null || renditionVisible;
-    }
-
-    public boolean isRenditionVisibleSet() {
-        return renditionVisible != null;
+        return renditionVisible == null ? DEFAULT_RENDITION_VISIBLE : renditionVisible.booleanValue();
     }
 
     public boolean isRendition() {
-        return rendition == null || rendition;
-    }
-
-    public boolean isRenditionSet() {
-        return rendition != null;
+        return rendition == null ? DEFAULT_ISRENDITION : rendition.booleanValue();
     }
 
     public void setRendition(Boolean rendition) {
@@ -224,12 +221,45 @@ public class PictureConversion implements Comparable<PictureConversion> {
         clone.enabled = enabled;
         clone.isDefault = isDefault;
         if (filterIds != null) {
-            clone.filterIds = new ArrayList<>();
-            clone.filterIds.addAll(filterIds);
+            clone.filterIds = new ArrayList<>(filterIds);
         }
         clone.rendition = rendition;
         clone.renditionVisible = renditionVisible;
         return clone;
+    }
+
+    public void merge(PictureConversion other) {
+        if (other.enabled != null) {
+            enabled = other.enabled;
+        }
+        if (other.isDefault != null) {
+            isDefault = other.isDefault;
+        }
+        if (!StringUtils.isBlank(other.chainId)) {
+            chainId = other.chainId;
+        }
+        if (!StringUtils.isBlank(other.tag)) {
+            tag = other.tag;
+        }
+        if (!StringUtils.isBlank(other.description)) {
+            description = other.description;
+        }
+        if (other.order != null) {
+            order = other.order;
+        }
+        if (other.maxSize != null) {
+            maxSize = other.maxSize;
+        }
+        List<String> newFilterIds = new ArrayList<>();
+        newFilterIds.addAll(filterIds);
+        newFilterIds.addAll(other.filterIds);
+        filterIds = newFilterIds;
+        if (other.rendition != null) {
+            rendition = other.rendition;
+        }
+        if (other.renditionVisible != null) {
+            renditionVisible = other.renditionVisible;
+        }
     }
 
     @Override
