@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2015 Nuxeo SA (http://nuxeo.com/) and others.
+ * (C) Copyright 2016 Nuxeo SA (http://nuxeo.com/) and others.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  *
  * Contributors:
  *     Florent Guillaume
+ *     Estelle Giuy <egiuly@nuxeo.com>
  */
 package org.nuxeo.ecm.core.io.download;
 
@@ -133,6 +134,35 @@ public interface DownloadService {
      * @since 9.1
      */
     String getDownloadUrl(String storeKey);
+
+    /**
+     * Get the base URL of a URL to use to download blobs
+     *
+     * @param url the URL to use to download blobs
+     *            (http://localhost:8080/nuxeo/nxfile/default/3727ef6b-cf8c-4f27-ab2c-79de0171a2c8/files:files/0/file/image.png)
+     * @return the base URL with the context (http://localhost:8080/nuxeo)
+     * @since 9.1
+     */
+    String getBaseDownloadUrl(String url);
+
+    /**
+     * Parses the path of the URL to use to download blobs
+     *
+     * @param urlPath the path of the URL to use to download blobs
+     * @return the map of the URL details (repository, docId, xpath, index)
+     * @since 9.1
+     */
+    Map<String, String> parseDownloadUrlPath(String urlPath);
+
+    /**
+     * Gets a document from a repository name and a docId
+     *
+     * @param repository the repository name
+     * @param docId the document id
+     * @return the DocumentModel
+     * @since 9.1
+     */
+    DocumentModel getDownloadDocument(String repository, String docId);
 
     /**
      * Triggers a blobs download. Once the temporary blobs are transfered from the store, they are

@@ -23,9 +23,13 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.io.UncheckedIOException;
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URL;
+import java.net.URLDecoder;
 import java.security.Principal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -34,6 +38,8 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.script.Invocable;
 import javax.script.ScriptContext;
@@ -50,8 +56,11 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.nuxeo.common.utils.URIUtils;
 import org.nuxeo.ecm.core.api.Blob;
+import org.nuxeo.ecm.core.api.CoreInstance;
 import org.nuxeo.ecm.core.api.CoreSession;
 import org.nuxeo.ecm.core.api.DocumentModel;
+import org.nuxeo.ecm.core.api.DocumentRef;
+import org.nuxeo.ecm.core.api.IdRef;
 import org.nuxeo.ecm.core.api.NuxeoException;
 import org.nuxeo.ecm.core.api.NuxeoPrincipal;
 import org.nuxeo.ecm.core.api.SystemPrincipal;
@@ -217,6 +226,56 @@ public class DownloadServiceImpl extends DefaultComponent implements DownloadSer
     @Override
     public String getDownloadUrl(String storeKey) {
         return DownloadService.NXBIGBLOB + "/" + storeKey;
+    }
+
+    @Override
+    public String getBaseDownloadUrl(String urlString) {
+        try {
+            URL url = new URL(urlString);
+            return url.getProtocol() + "://" + url.getHost() + (url.getPort() == -1 ? "" : ":" + url.getPort())
+                    + url.getFile().substring(0, url.getFile().indexOf('/', 1));
+        } catch (MalformedURLException e) {
+            return null;
+        }
+    }
+
+    @Override
+    public Map<String, String> parseDownloadUrlPath(String urlPath) {
+        Map<String, String> parsedUrl = new HashMap<String, String>();
+        String[] parts = urlPath.split("/");
+        int length = parts.length;
+        if (length < 2) {
+            return null;
+        }
+        String repositoryName = parts[0];
+        String docId = parts[1];
+        String xpath, filename;
+        if (length == 2) {
+            xpath = DownloadService.BLOBHOLDER_0;
+            filename = null;
+        } else if (length == 3) {
+            xpath = parts[2];
+            filename = null;
+        } else {
+            xpath = StringUtils.join(Arrays.asList(parts).subList(2, length - 1), "/");
+            filename = parts[length - 1];
+        }
+        parsedUrl.put("repository", repositoryName);
+        parsedUrl.put("docId", docId);
+        parsedUrl.put("xpath", xpath);
+        parsedUrl.put("filename", filename);
+        return parsedUrl;
+    }
+
+    @Override
+    public DocumentModel getDownloadDocument(String repository, String docId) {
+        try (CoreSession session = CoreInstance.openCoreSession(repository)) {
+            DocumentRef docRef = new IdRef(docId);
+            if (!session.exists(docRef)) {
+                return null;
+            }
+            return session.getDocument(docRef);
+        }
     }
 
     @Override
