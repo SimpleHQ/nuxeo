@@ -57,6 +57,18 @@ public class ElasticSearchRemoteConfig implements Serializable {
     @XNode("@useExternalVersion")
     protected boolean externalVersion = true;
 
+    @XNode("@actionBulkCompress")
+    protected boolean actionBulkCompress = false;
+
+    @XNode("@shieldTransportSsl")
+    protected boolean shieldTransportSsl = false;
+
+    @XNode("@xFoundCluster")
+    protected String xFoundCluster;
+
+    @XNode("@shieldUser")
+    protected String shieldUser;
+
     public String getClusterName() {
         return clusterName;
     }
@@ -98,6 +110,22 @@ public class ElasticSearchRemoteConfig implements Serializable {
 
     public boolean useExternalVersion() {
         return externalVersion;
+    }
+
+    public boolean isActionBulkCompress() {
+        return this.actionBulkCompress;
+    }
+
+    public boolean isShieldTransportSsl() {
+        return this.shieldTransportSsl;
+    }
+
+    public String getXFoundCluster() {
+        return this.xFoundCluster;
+    }
+
+    public String getShieldUser() {
+        return this.shieldUser;
     }
 
     @Override

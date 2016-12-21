@@ -142,6 +142,7 @@
     <jaxws.version>2.2.8</jaxws.version>
     <tomcat.version>7.0.69</tomcat.version>
     <lucene.version>5.5.0</lucene.version>
+    <base-elasticsearch.version>2.3.5</base-elasticsearch.version>
     <elasticsearch.version>2.3.5-nx1</elasticsearch.version>
     <apacheds.version>1.5.1</apacheds.version>
     <apachedshared.version>0.9.7</apachedshared.version>
@@ -1980,6 +1981,12 @@
         <groupId>org.elasticsearch</groupId>
         <artifactId>elasticsearch</artifactId>
         <version>${elasticsearch.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.elasticsearch.plugin</groupId>
+        <artifactId>shield</artifactId>
+        <version>${base-elasticsearch.version}</version>
       </dependency>
 
       <!-- apache -->

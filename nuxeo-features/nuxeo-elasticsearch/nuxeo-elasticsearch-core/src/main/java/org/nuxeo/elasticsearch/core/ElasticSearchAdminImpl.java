@@ -49,6 +49,7 @@ import org.elasticsearch.common.settings.Settings.Builder;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.node.NodeBuilder;
+import org.elasticsearch.shield.ShieldPlugin;
 import org.nuxeo.elasticsearch.api.ElasticSearchAdmin;
 import org.nuxeo.elasticsearch.config.ElasticSearchIndexConfig;
 import org.nuxeo.elasticsearch.config.ElasticSearchLocalConfig;
@@ -108,7 +109,7 @@ public class ElasticSearchAdminImpl implements ElasticSearchAdmin {
             return;
         }
         if (remoteConfig != null) {
-            client = connectToRemote(remoteConfig);
+            client = remoteConfig.getShieldUser() == null ? connectToRemote(remoteConfig) : connectToSecureRemote(remoteConfig);
             embedded = false;
         } else {
             localNode = createEmbeddedNode(localConfig);
@@ -185,6 +186,42 @@ public class ElasticSearchAdminImpl implements ElasticSearchAdmin {
             log.debug("Using settings: " + settings.toDelimitedString(','));
         }
         TransportClient ret = TransportClient.builder().settings(settings).build();
+        String[] addresses = config.getAddresses();
+        if (addresses == null) {
+            log.error("You need to provide an addressList to join a cluster");
+        } else {
+            for (String item : config.getAddresses()) {
+                String[] address = item.split(":");
+                log.debug("Add transport address: " + item);
+                try {
+                    InetAddress inet = InetAddress.getByName(address[0]);
+                    ret.addTransportAddress(new InetSocketTransportAddress(inet, Integer.parseInt(address[1])));
+                } catch (UnknownHostException e) {
+                    log.error("Unable to resolve host " + address[0], e);
+                }
+            }
+        }
+        assert ret != null : "Unable to create a remote client";
+        return ret;
+    }
+
+    private Client connectToSecureRemote(ElasticSearchRemoteConfig config) {
+        log.info("Connecting to remote ES cluster with shield security: " + config);
+        Builder builder = Settings.settingsBuilder()
+                                  .put("cluster.name", config.getClusterName())
+                                  .put("client.transport.nodes_sampler_interval", config.getSamplerInterval())
+                                  .put("client.transport.ping_timeout", config.getPingTimeout())
+                                  .put("client.transport.ignore_cluster_name", config.isIgnoreClusterName())
+                                  .put("client.transport.sniff", config.isClusterSniff())
+                                  .put("action.bulk.compress", config.isActionBulkCompress())
+                                  .put("shield.transport.ssl", config.isShieldTransportSsl())
+                                  .put("request.headers.X-Found-Cluster", config.getXFoundCluster())
+                                  .put("shield.user", config.getShieldUser());
+        Settings settings = builder.build();
+        if (log.isDebugEnabled()) {
+            log.debug("Using settings: " + settings.toDelimitedString(','));
+        }
+        TransportClient ret = TransportClient.builder().addPlugin(ShieldPlugin.class).settings(settings).build();
         String[] addresses = config.getAddresses();
         if (addresses == null) {
             log.error("You need to provide an addressList to join a cluster");
