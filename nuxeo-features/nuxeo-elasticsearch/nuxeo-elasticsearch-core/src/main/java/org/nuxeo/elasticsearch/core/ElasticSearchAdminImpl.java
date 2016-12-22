@@ -109,7 +109,7 @@ public class ElasticSearchAdminImpl implements ElasticSearchAdmin {
             return;
         }
         if (remoteConfig != null) {
-            client = remoteConfig.getShieldUser() == null ? connectToRemote(remoteConfig) : connectToSecureRemote(remoteConfig);
+            client = shouldConnectToSecureRemote() ? connectToSecureRemote(remoteConfig) : connectToRemote(remoteConfig);
             embedded = false;
         } else {
             localNode = createEmbeddedNode(localConfig);
@@ -132,6 +132,11 @@ public class ElasticSearchAdminImpl implements ElasticSearchAdmin {
             localNode = null;
             log.info("ES embedded Node Stopped");
         }
+    }
+
+    private boolean shouldConnectToSecureRemote() {
+        String shieldUser = remoteConfig.getShieldUser();
+        return shieldUser != null && !shieldUser.trim().isEmpty();
     }
 
     private Node createEmbeddedNode(ElasticSearchLocalConfig conf) {
